@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management System</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <main class="container">
+        <header>
+            <h1>Student Management</h1>
+            <p>Manage student records easily</p>
+        </header>
+
+        <section class="card">
+            <h2 id="formTitle">Add New Student</h2>
+
+            <form id="studentForm">
+                <input type="hidden" id="studentId">
+
+                <label for="name">Student Name</label>
+                <input id="name" type="text" placeholder="Enter name" required>
+
+                <label for="email">Email Address</label>
+                <input id="email" type="email" placeholder="Enter email" required>
+
+                <label for="course">Course</label>
+                <input id="course" type="text" placeholder="Enter course" required>
+
+                <button id="saveButton" type="submit">Add Student</button>
+                <button id="cancelButton" type="button" class="secondary" hidden>
+                    Cancel
+                </button>
+            </form>
+
+            <p id="message" role="status"></p>
+        </section>
+
+        <section class="card">
+            <h2>Student Records</h2>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Course</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTable">
+                        <tr><td colspan="5">Loading records...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+<script>
+const API = "/api/students";
+
+const form = document.getElementById("studentForm");
+const table = document.getElementById("studentTable");
+const message = document.getElementById("message");
+
+async function request(url, options = {}) {
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Request failed");
+    }
+
+    return response;
+}
+
+async function loadStudents() {
+    try {
+        const response = await request(API);
+        const students = await response.json();
+
+        table.replaceChildren();
+
+        if (students.length === 0) {
+            table.innerHTML =
+                '<tr><td colspan="5">No students found</td></tr>';
+            return;
+        }
+
+        students.forEach(student => {
+            const row = document.createElement("tr");
+
+            [student.id, student.name, student.email, student.course]
+                .forEach(value => {
+                    const cell = document.createElement("td");
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+
+            const actions = document.createElement("td");
+
+            const editButton = document.createElement("button");
+            editButton.textContent = "Edit";
+            editButton.onclick = () => editStudent(student);
+
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.className = "danger";
+            deleteButton.onclick = () => deleteStudent(student.id);
+
+            actions.append(editButton, deleteButton);
+            row.appendChild(actions);
+            table.appendChild(row);
+        });
+    } catch (error) {
+        message.textContent = error.message;
+    }
+}
+
+form.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const id = document.getElementById("studentId").value;
+
+    const student = {
+        name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        course: document.getElementById("course").value.trim()
+    };
+
+    try {
+        await request(id ? `${API}/${id}` : API, {
+            method: id ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(student)
+        });
+
+        message.textContent = id
+            ? "Student updated successfully"
+            : "Student added successfully";
+
+        resetForm();
+        await loadStudents();
+    } catch (error) {
+        message.textContent = error.message;
+    }
+});
+
+function editStudent(student) {
+    document.getElementById("studentId").value = student.id;
+    document.getElementById("name").value = student.name;
+    document.getElementById("email").value = student.email;
+    document.getElementById("course").value = student.course;
+
+    document.getElementById("formTitle").textContent = "Update Student";
+    document.getElementById("saveButton").textContent = "Update Student";
+    document.getElementById("cancelButton").hidden = false;
+}
+
+async function deleteStudent(id) {
+    if (!confirm("Delete this student?")) return;
+
+    try {
+        await request(`${API}/${id}`, { method: "DELETE" });
+        message.textContent = "Student deleted successfully";
+        await loadStudents();
+    } catch (error) {
+        message.textContent = error.message;
+    }
+}
+
+function resetForm() {
+    form.reset();
+    document.getElementById("studentId").value = "";
+    document.getElementById("formTitle").textContent = "Add New Student";
+    document.getElementById("saveButton").textContent = "Add Student";
+    document.getElementById("cancelButton").hidden = true;
+}
+
+document.getElementById("cancelButton").addEventListener("click", resetForm);
+
+loadStudents();
+</script>
+</body>
+</html>

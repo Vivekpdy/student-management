@@ -1,0 +1,80 @@
+
+# Student Management System
+
+A simple CRUD web application built with Go, HTML, CSS, MySQL,
+Docker, Docker Compose, Jenkins and AWS EC2.
+
+## Architecture
+
+- Frontend: HTML, CSS and Nginx
+- Backend: Go REST API
+- Database: MySQL 8.4
+- Containerization: Docker
+- Local orchestration: Docker Compose
+- CI/CD: Jenkins
+- Deployment: AWS EC2
+
+## Features
+
+- Add a student
+- View all students
+- Update student details
+- Delete a student
+- Persist records in MySQL
+
+## Run locally
+
+1. Install Docker Desktop.
+2. Open a terminal in the project root.
+3. Start the application:
+
+   docker compose up -d --build
+
+4. Open http://localhost:8080
+
+## Useful commands
+
+Check services:
+
+    docker compose ps
+
+View logs:
+
+    docker compose logs -f
+
+Stop services:
+
+    docker compose down
+
+Rebuild after code changes:
+
+    docker compose up -d --build
+
+## API endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/students | List students |
+| POST | /api/students | Create student |
+| PUT | /api/students/{id} | Update student |
+| DELETE | /api/students/{id} | Delete student |
+| GET | /health | Backend health check |
+
+## Database
+
+Database: student_db
+Table: students
+
+Example query:
+
+    SELECT * FROM students;
+
+## CI/CD plan
+
+GitHub -> Jenkins CI -> Docker Hub -> Jenkins CD -> AWS EC2
+
+The CI pipeline tests the Go application and builds and pushes
+the frontend and backend images.
+
+The CD pipeline pulls the images and deploys them using
+the production Docker Compose configuration.
